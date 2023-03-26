@@ -99,6 +99,8 @@ TinyGsm modem(debugger);
 TinyGsm modem(SerialAT);
 #endif
 
+#define BUZZER 12
+
 // TinyGSM Client for Internet connection
 TinyGsmClient client(modem);
 
@@ -160,6 +162,9 @@ void setup() {
   lcd.begin();
   lcd.backlight();
   lcd.home();
+
+  pinMode(BUZZER, OUTPUT);
+  digitalWrite(BUZZER, LOW);  //LOW means OFF
 
   // initiate scale to default and then set defined offset
   scale.set_scale();
@@ -350,15 +355,19 @@ void alertMQSensor() {
 
     thresholdReached = true;
 
+    digitalWrite(BUZZER, HIGH);
+
     // if the MQ sensor value is greater than or equal to the threshold, send an alert
     String smsMessage = "MQ Sensor Gas Alert: Sensor detected Smoke or Gas particles.";
 
     // send the alert using the TinyGSM library
     modem.sendSMS(TARGET_NUMBER, smsMessage);
 
-    // make phone call to
+    // make phone call to Target Number;
     modem.callNumber(TARGET_NUMBER);
 
+  } else {
+    digitalWrite(BUZZER, LOW);
   }
 }
 // This function will display the MQ sensor value on the LCD display
@@ -383,11 +392,11 @@ void strainThresholdAlert() {
   float strain = scale.get_units();
 
   // check to see if strain is greater than or equal to the threshold
-  float alert = strain <= strainThreshold && strain >= 0.5; //if greater than 0.5kg 
+  float alert = strain <= strainThreshold && strain >= 0.5;  //if greater than 0.5kg
 
   // if strain is greater than or equal to the threshold, send an alert
   if (alert) {
-    String smsMessage = "Strains Alert: Weight is below "+String(strainThreshold)+"kg";
+    String smsMessage = "Strains Alert: Weight is below " + String(strainThreshold) + "kg";
     modem.sendSMS(TARGET_NUMBER, smsMessage);
   }
 }
